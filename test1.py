@@ -1,6 +1,7 @@
 import datetime
 import hashlib
 import random
+import jsonpickle
 
 class Block:
     height = 0
@@ -13,14 +14,7 @@ class Block:
 
     def __init__(self, data):
         self.data = data
-        if data == "Genesis":
-            self.timestamp = 0
-            self.previous_hash = 0
-            self.nonce = 0
-            self.height = 0
-            self.difficulty = 0
-        else:
-            self.timestamp = datetime.datetime.now().timestamp()
+        self.timestamp = datetime.datetime.now().timestamp()
 
 
     def hash(self):
@@ -35,7 +29,11 @@ class Block:
         return h.hexdigest()
 
     def __str__(self):
-        return "Block Hash: " + str(self.hash()) + "\nHeight: " + str(self.height) + "\nP block: " + str(self.previous_hash) + "\nBlock Data: " + str(self.data) + "\nNonce: " + str(self.nonce) + "\nDiff: " + str(self.difficulty) + "\nTimestamp: " + str(self.timestamp) + "\n--------------"
+        #return "Block Hash: " + str(self.hash()) + "\nHeight: " + str(self.height) + "\nP block: " + str(self.previous_hash) + "\nBlock Data: " + str(self.data) + "\nNonce: " + str(self.nonce) + "\nDiff: " + str(self.difficulty) + "\nTimestamp: " + str(self.timestamp) + "\n--------------"
+        return str(self.__dict__)
+
+    def __repr__(self):
+        return str(self)
 
 class SingletonMeta(type):
     """
@@ -59,9 +57,20 @@ class SingletonMeta(type):
 class Blockchain(metaclass=SingletonMeta):
 
     def __init__(self):
-        self.chain= []
-        self.block = Block("Genesis")
-        self.chain.append(self.block)
+        try:
+            with open('blockchain.pkl', 'rb') as inp:
+                self.chain = jsonpickle.load(inp)
+        except FileNotFoundError:
+            with open('blockchain.pkl', 'wb') as outp:
+                self.chain = []
+                block = Block("Genesis")
+                self.chain.append(block)
+                jsonpickle.dump(self.chain, outp, jsonpickle.HIGHEST_PROTOCOL)
+
+        if self.chain == None:
+            self.chain = []
+            block = Block("Genesis")
+            self.chain.append(block)
 
     diff = 10
     maxNonce = 2**32
@@ -71,6 +80,8 @@ class Blockchain(metaclass=SingletonMeta):
         block.height = len(self.chain)
         block.difficulty = self.diff
         self.chain.append(block)
+        with open('blockchain.pkl', 'wb') as outp:
+            jsonpickle.dump(self.chain, outp, jsonpickle.HIGHEST_PROTOCOL)
 
 
     def mine(self, block):
@@ -84,33 +95,18 @@ class Blockchain(metaclass=SingletonMeta):
                 #block.nonce += 1
                 #print(block.nonce)
 
-    def findBlock(self, hash):
-        for item in self.chain:
-            if hash == item.hash():
-                return item
-            else:
-                break 
-    
-    def checkChain(self):
-        for i in range(len(self.chain)):
-            if i == 0:
-                pass
-            else:
-                if self.chain[i].previous_hash != self.chain[i-1].hash():
-                    return False
-        return True
-            
 
+blockchain = Blockchain()
 
-
-
-#blockchain = Blockchain()
+print(blockchain.chain)
 
 #for n in range(1):
 #    blockchain.mine(Block("Block " + str(n+1)))
 
+
+##del blockchain
+
+
 #for block in blockchain.chain:
 #    print(block)
-
-
 

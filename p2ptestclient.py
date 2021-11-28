@@ -1,6 +1,7 @@
 import datetime
 import hashlib
 import random
+import jsonpickle
 
 class Block:
     height = 0
@@ -59,9 +60,15 @@ class SingletonMeta(type):
 class Blockchain(metaclass=SingletonMeta):
 
     def __init__(self):
-        self.chain= []
-        self.block = Block("Genesis")
-        self.chain.append(self.block)
+        try:
+            with open('data.json', 'r') as f:
+                self.chain = jsonpickle.decode(f.read())
+        except FileNotFoundError:
+            with open('data.json', 'w') as f:
+                self.chain = []
+                block = Block("Genesis")
+                self.chain.append(block)
+                f.write(jsonpickle.encode(self.chain))
 
     diff = 10
     maxNonce = 2**32
@@ -71,6 +78,8 @@ class Blockchain(metaclass=SingletonMeta):
         block.height = len(self.chain)
         block.difficulty = self.diff
         self.chain.append(block)
+        with open('data.json', 'w') as f:
+            f.write(jsonpickle.encode(self.chain))
 
 
     def mine(self, block):
@@ -104,13 +113,13 @@ class Blockchain(metaclass=SingletonMeta):
 
 
 
-#blockchain = Blockchain()
+blockchain = Blockchain()
 
-#for n in range(1):
-#    blockchain.mine(Block("Block " + str(n+1)))
+for n in range(5):
+    blockchain.mine(Block("Block " + str(n+1)))
 
-#for block in blockchain.chain:
-#    print(block)
+for block in blockchain.chain:
+    print(block)
 
 
 

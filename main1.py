@@ -14,8 +14,8 @@ def print_menu():
 
 if __name__=='__main__':
     blockchain = block.Blockchain()
-    node = MyOwnPeer2PeerNode("127.0.0.1", 8001, 1)
-    node.connect_with_node('127.0.0.1', 8002)
+    node = MyOwnPeer2PeerNode("127.0.0.1", 8002, 2)
+    node.connect_with_node('127.0.0.1', 8001)
     node.start()
     while(True):
         print_menu()
