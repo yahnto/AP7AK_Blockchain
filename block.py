@@ -1,7 +1,6 @@
 import datetime
 import hashlib
 import random
-import random
 
 class Block:
     height = 0
@@ -68,14 +67,14 @@ class Blockchain(metaclass=SingletonMeta):
     maxNonce = 2**32
 
     def add(self, block):
-        block.previous_hash = self.chain[-1].hash()
-        block.height = len(self.chain)
-        block.difficulty = self.diff
         self.chain.append(block)
 
 
     def mine(self, block):
         target = 2 ** (256-self.diff)
+        block.previous_hash = self.chain[-1].hash()
+        block.height = len(self.chain)
+        block.difficulty = self.diff
         for i in range(self.maxNonce):
             if int(block.hash(), 16) <= target:
                 self.add(block)
@@ -84,6 +83,13 @@ class Blockchain(metaclass=SingletonMeta):
                 block.nonce = format(random.getrandbits(32), "x")
                 #block.nonce += 1
                 #print(block.nonce)
+
+    def checkDiff(self,block):
+        target = 2 ** (256 - block.difficulty)
+        if int(block.hash(), 16) <= target or block.data == "Genesis":
+            return True
+        else:
+            return False
 
     def findBlock(self, hash):
         for item in self.chain:
