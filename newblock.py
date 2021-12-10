@@ -6,7 +6,7 @@ import jsonpickle
 class Block:
     height = 0
     data = None
-    hash = None
+    hashOfBlock = None
     nonce = format(random.getrandbits(32), "x")
     difficulty = 0
     previous_hash = None
@@ -20,9 +20,9 @@ class Block:
             self.nonce = 0
             self.height = 0
             self.difficulty = 0
+            self.hashOfBlock = self.hash()
         else:
             self.timestamp = datetime.datetime.now().timestamp()
-
 
     def hash(self):
         h = hashlib.sha256()
@@ -36,22 +36,20 @@ class Block:
         return h.hexdigest()
 
     def __str__(self):
-        return "Block Hash: " + str(self.hash()) + "\nHeight: " + str(self.height) + "\nP block: " + str(self.previous_hash) + "\nBlock Data: " + str(self.data) + "\nNonce: " + str(self.nonce) + "\nDiff: " + str(self.difficulty) + "\nTimestamp: " + str(self.timestamp) + "\n--------------"
+        return "Block Hash: " + str(self.hashOfBlock) + "\nHeight: " + str(self.height) + "\nP block: " + str(self.previous_hash) + "\nBlock Data: " + str(self.data) + "\nNonce: " + str(self.nonce) + "\nDiff: " + str(self.difficulty) + "\nTimestamp: " + str(self.timestamp) + "\n--------------"
+
+    def items(self,height,timestamp,nonce,previous_hash,difficulty,hashOfBlock):
+        self.timestamp = timestamp
+        self.previous_hash = previous_hash
+        self.nonce = nonce
+        self.height = height
+        self.difficulty = difficulty
+        self.hashOfBlock = hashOfBlock
 
 class SingletonMeta(type):
-    """
-    The Singleton class can be implemented in different ways in Python. Some
-    possible methods include: base class, decorator, metaclass. We will use the
-    metaclass because it is best suited for this purpose.
-    """
-
     _instances = {}
 
     def __call__(cls, *args, **kwargs):
-        """
-        Possible changes to the value of the `__init__` argument do not affect
-        the returned instance.
-        """
         if cls not in cls._instances:
             instance = super().__call__(*args, **kwargs)
             cls._instances[cls] = instance
@@ -94,6 +92,7 @@ class Blockchain(metaclass=SingletonMeta):
         block.difficulty = self.diff
         for i in range(self.maxNonce):
             if int(block.hash(), 16) <= target:
+                block.hashOfBlock = block.hash()
                 self.add(block)
                 break
             else:
@@ -114,7 +113,7 @@ class Blockchain(metaclass=SingletonMeta):
                 if i == 0:
                     pass
                 else:
-                    if self.chain[i].previous_hash != self.chain[i-1].hash():
+                    if (self.chain[i].previous_hash != self.chain[i-1].hash()) or (self.chain[i].hash() !=  self.chain[i].hashOfBlock):
                         return False
             return True
         return True
@@ -129,4 +128,6 @@ class Blockchain(metaclass=SingletonMeta):
     def lastBlock(self):
         return self.chain[-1]
             
+
+blockchain = Blockchain()
 

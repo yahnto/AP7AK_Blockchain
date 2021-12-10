@@ -5,7 +5,7 @@ import os
 
 menu_options = {
     1: 'Add Hacked Block',
-    2: 'Adjust difficulty',
+    2: 'Add Normal Block',
     3: 'Show blockchain',
     4: 'Exit',
 }
@@ -22,7 +22,7 @@ if __name__=='__main__':
         block = Block("Genesis")
         blockchain.chain.append(block)
         os.remove("data.json")
-    node = MyOwnPeer2PeerNode("127.0.0.1", 8001, 2)
+    node = MyOwnPeer2PeerNode("127.0.0.1", 8001, 1)
     node.connect_with_node('127.0.0.1', 8002)
     node.start()
     while(True):
@@ -37,13 +37,15 @@ if __name__=='__main__':
             blockchain.mine(Block(data))
             msg = blockchain.chain[-1].__dict__
             msg['msg'] = "New block"
-            msg['previous_hash'] = "haha hacked"
+            msg['nonce'] = 22
             blockchain.removeLast()
             node.send_to_nodes(msg)
         elif option == 2:
-            #diff = input("Type diffuiculty:")
-            #blockchain.diff = int(diff)
-            blockchain.chainLen()
+            data = input("Type data:")
+            blockchain.mine(Block(data))
+            msg = blockchain.chain[-1].__dict__
+            msg['msg'] = "New block"
+            node.send_to_nodes(msg)
         elif option == 3:
             for b in blockchain.chain:
                 print(b)

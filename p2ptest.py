@@ -35,20 +35,32 @@ class MyOwnPeer2PeerNode (Node):
 
     def node_message(self, node, data):
         if data['msg'] == "New block":
-            if data['height'] != self.blockchain.lastBlock().height:
+            if data['previous_hash'] == self.blockchain.lastBlock().hashOfBlock:
                 block = Block(data['data'])
-                block.height = data['height']
-                block.timestamp = data['timestamp']
-                block.nonce = data['nonce']
-                block.previous_hash = data['previous_hash']
-                block.difficulty = data['difficulty']
+                block.items(data['height'],data['timestamp'],data['nonce'],data['previous_hash'],data['difficulty'],data['hashOfBlock'])
                 self.blockchain.add(block)
                 if self.blockchain.checkChain() and self.blockchain.checkDiff(block):
-                    print("Block bol overeny a pridany")
+                    print("Novy block bol overeny a pridany")
                     msg = self.blockchain.lastBlock().__dict__
                     msg['msg'] = "New block"
                     noNodes = [node]
                     self.send_to_nodes(msg,noNodes)
+                else:
+                    print("Block nebol overeny a nebol pridany")
+                    self.blockchain.removeLast()
+            else:
+                msg = {
+                    "height": self.blockchain.chain[-1].height,
+                    "msg": "Get Height",
+                }
+                self.send_to_node(node,msg)
+        elif data['msg'] == "Sync block":
+            if data['hashOfBlock'] != self.blockchain.lastBlock().hashOfBlock:
+                block = Block(data['data'])
+                block.items(data['height'],data['timestamp'],data['nonce'],data['previous_hash'],data['difficulty'],data['hashOfBlock'])
+                self.blockchain.add(block)
+                if self.blockchain.checkChain() and self.blockchain.checkDiff(block):
+                    print("Block bol overeny a pridany")
                 else:
                     print("Block nebol overeny a nebol pridany")
                     self.blockchain.removeLast()
@@ -69,8 +81,7 @@ class MyOwnPeer2PeerNode (Node):
                 print("nechyba mi ziadny blok ")
         elif data['msg'] == "Get Block":
             msg = self.blockchain.chain[data['block_height']].__dict__
-            msg['msg'] = "New block"
-            print(msg)
+            msg['msg'] = "Sync block"
             self.send_to_node(node,msg)
 
         
