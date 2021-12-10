@@ -69,6 +69,9 @@ class Blockchain(metaclass=SingletonMeta):
     def add(self, block):
         self.chain.append(block)
 
+    def lastBlock(self):
+        return self.chain[-1]
+
 
     def mine(self, block):
         target = 2 ** (256-self.diff)

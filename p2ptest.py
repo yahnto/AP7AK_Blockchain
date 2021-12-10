@@ -1,7 +1,7 @@
 from p2pnetwork.node import Node
 
-from block import Block
-from block import Blockchain
+from newblock import Block
+from newblock import Blockchain
 
 class MyOwnPeer2PeerNode (Node):
     blockchain = Blockchain()
@@ -35,23 +35,34 @@ class MyOwnPeer2PeerNode (Node):
 
     def node_message(self, node, data):
         if data['msg'] == "New block":
-            block = Block(data['data'])
-            block.height = data['height']
-            block.timestamp = data['timestamp']
-            block.nonce = data['nonce']
-            block.previous_hash = data['previous_hash']
-            block.difficulty = data['difficulty']
-            self.blockchain.chain.append(block)
-            print("Block bol pridany")
+            if data['height'] != self.blockchain.lastBlock().height:
+                block = Block(data['data'])
+                block.height = data['height']
+                block.timestamp = data['timestamp']
+                block.nonce = data['nonce']
+                block.previous_hash = data['previous_hash']
+                block.difficulty = data['difficulty']
+                self.blockchain.add(block)
+                if self.blockchain.checkChain() and self.blockchain.checkDiff(block):
+                    print("Block bol overeny a pridany")
+                    msg = self.blockchain.lastBlock().__dict__
+                    msg['msg'] = "New block"
+                    noNodes = [node]
+                    self.send_to_nodes(msg,noNodes)
+                else:
+                    print("Block nebol overeny a nebol pridany")
+                    self.blockchain.removeLast()
+            else:
+                pass
         elif data['msg'] == "Get Height":
-            if data['height'] > self.blockchain.chain[-1].height:
-                chyba = data['height'] - self.blockchain.chain[-1].height
+            if data['height'] > self.blockchain.lastBlock().height:
+                chyba = data['height'] - self.blockchain.lastBlock().height
                 print("chyba mi " + str(chyba))
                 for i in range(1, chyba+1, 1):
                     msg = {
-                        "height": self.blockchain.chain[-1].height,
+                        "height": self.blockchain.lastBlock().height,
                         "msg": "Get Block",
-                        "block_height": self.blockchain.chain[-1].height + i
+                        "block_height": self.blockchain.lastBlock().height + i
                     }
                     self.send_to_node(node,msg)
             else:

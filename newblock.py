@@ -70,20 +70,28 @@ class Blockchain(metaclass=SingletonMeta):
                 self.chain.append(block)
                 f.write(jsonpickle.encode(self.chain))
 
-    diff = 10
-    maxNonce = 2**32
+    def lastBlock(self):
+        return self.chain[-1]
+    
 
     def add(self, block):
-        block.previous_hash = self.chain[-1].hash()
-        block.height = len(self.chain)
-        block.difficulty = self.diff
         self.chain.append(block)
         with open('data.json', 'w') as f:
             f.write(jsonpickle.encode(self.chain))
 
+    def removeLast(self):
+        self.chain.pop()
+        with open('data.json', 'w') as f:
+            f.write(jsonpickle.encode(self.chain))
+
+    diff = 10
+    maxNonce = 2**32
 
     def mine(self, block):
         target = 2 ** (256-self.diff)
+        block.previous_hash = self.chain[-1].hash()
+        block.height = len(self.chain)
+        block.difficulty = self.diff
         for i in range(self.maxNonce):
             if int(block.hash(), 16) <= target:
                 self.add(block)
@@ -101,12 +109,24 @@ class Blockchain(metaclass=SingletonMeta):
                 break 
     
     def checkChain(self):
-        for i in range(len(self.chain)):
-            if i == 0:
-                pass
-            else:
-                if self.chain[i].previous_hash != self.chain[i-1].hash():
-                    return False
+        if len(self.chain) != 1:
+            for i in range(len(self.chain)):
+                if i == 0:
+                    pass
+                else:
+                    if self.chain[i].previous_hash != self.chain[i-1].hash():
+                        return False
+            return True
         return True
+    
+    def checkDiff(self,block):
+        target = 2 ** (256 - block.difficulty)
+        if int(block.hash(), 16) <= target or block.data == "Genesis":
+            return True
+        else:
+            return False
+
+    def lastBlock(self):
+        return self.chain[-1]
             
 
